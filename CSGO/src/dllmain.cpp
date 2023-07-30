@@ -4,10 +4,32 @@
 #include <thread>
 #include <cstdint>
 
+#include "hooks.h"
+
 // Setup function
 void Setup(const HMODULE instance)
 {
+    try
+    {
+        gui::Setup();
+        hooks::Setup();
+    }
+    catch (const std::exception& error)
+    {
+        MessageBeep(MB_ICONERROR);
+        MessageBox(0, error.what(), "Error", MB_OK | MB_ICONEXCLAMATION);
+
+        goto UNLOAD;
+    }
+
+    while (!GetAsyncKeyState(VK_END))
+        std::this_thread::sleep_for(std::chrono::milliseconds(200));
     
+UNLOAD:
+    hooks::Destroy();
+    gui::Destroy();
+    
+    FreeLibraryAndExitThread(instance, 0);    
 }
 
 // Entry point
